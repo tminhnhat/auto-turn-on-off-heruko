@@ -8,6 +8,7 @@ export class Scheduler {
   private herokuClient: HerokuClient;
   private apps: AppConfig[];
   private jobs: Map<string, cron.ScheduledTask> = new Map();
+  private jobStatus: Map<string, boolean> = new Map();
   private historyManager: HistoryManager;
 
   constructor(herokuClient: HerokuClient, apps: AppConfig[], historyManager?: HistoryManager) {
@@ -37,10 +38,12 @@ export class Scheduler {
     
     this.jobs.forEach((job, name) => {
       job.stop();
+      this.jobStatus.set(name, false);
       logger.info(`Stopped task: ${name}`);
     });
     
     this.jobs.clear();
+    this.jobStatus.clear();
     logger.info('Scheduler stopped');
   }
 
@@ -65,6 +68,7 @@ export class Scheduler {
       
       onJob.start();
       this.jobs.set(onTaskName, onJob);
+      this.jobStatus.set(onTaskName, true);
       logger.info(`Scheduled turn ON for ${name}: ${scheduleOn} (${timezone || 'system timezone'})`);
     }
 
@@ -80,6 +84,7 @@ export class Scheduler {
       
       offJob.start();
       this.jobs.set(offTaskName, offJob);
+      this.jobStatus.set(offTaskName, true);
       logger.info(`Scheduled turn OFF for ${name}: ${scheduleOff} (${timezone || 'system timezone'})`);
     }
   }
@@ -178,14 +183,13 @@ export class Scheduler {
   /**
    * Get status of all scheduled tasks
    */
-  getTaskStatus(): Array<{ name: string; isRunning: boolean; nextRun?: Date }> {
-    const status: Array<{ name: string; isRunning: boolean; nextRun?: Date }> = [];
+  getTaskStatus(): Array<{ name: string; isRunning: boolean; }> {
+    const status: Array<{ name: string; isRunning: boolean; }> = [];
     
     this.jobs.forEach((job, name) => {
       status.push({
         name,
-        isRunning: job.getStatus() === 'scheduled',
-        nextRun: job.nextDate()?.toDate()
+        isRunning: this.jobStatus.get(name) || false
       });
     });
     
@@ -215,6 +219,7 @@ export class Scheduler {
       if (job) {
         job.stop();
         this.jobs.delete(taskName);
+        this.jobStatus.delete(taskName);
         logger.info(`Removed task: ${taskName}`);
       }
     });
