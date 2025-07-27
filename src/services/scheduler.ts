@@ -1,16 +1,19 @@
 import * as cron from 'node-cron';
 import { HerokuClient } from '../services/herokuClient';
 import { AppConfig } from '../types/heroku';
+import { HistoryManager } from '../utils/history';
 import { logger } from '../utils/logger';
 
 export class Scheduler {
   private herokuClient: HerokuClient;
   private apps: AppConfig[];
   private jobs: Map<string, cron.ScheduledTask> = new Map();
+  private historyManager: HistoryManager;
 
-  constructor(herokuClient: HerokuClient, apps: AppConfig[]) {
+  constructor(herokuClient: HerokuClient, apps: AppConfig[], historyManager?: HistoryManager) {
     this.herokuClient = herokuClient;
     this.apps = apps;
+    this.historyManager = historyManager || new HistoryManager();
   }
 
   /**
@@ -108,26 +111,68 @@ export class Scheduler {
    * Turn on app
    */
   private async turnOnApp(appName: string): Promise<void> {
+    let previousState: 'running' | 'stopped' = 'stopped';
+    let success = false;
+    let error: string | undefined;
+
     try {
       logger.info(`Scheduled task: Turning ON app ${appName}`);
+      
+      // Get current state
+      const currentStatus = await this.herokuClient.getAppStatus(appName);
+      previousState = currentStatus.isRunning ? 'running' : 'stopped';
+      
       await this.herokuClient.turnOnApp(appName);
+      success = true;
       logger.info(`Scheduled task completed: App ${appName} turned ON`);
-    } catch (error) {
-      logger.error(`Scheduled task failed: Could not turn ON app ${appName}:`, error);
+    } catch (err: any) {
+      error = err.message || 'Unknown error';
+      logger.error(`Scheduled task failed: Could not turn ON app ${appName}:`, err);
     }
+
+    // Record in history
+    await this.historyManager.addEntry({
+      appName,
+      action: 'turn_on',
+      success,
+      error,
+      previousState,
+      newState: success ? 'running' : previousState
+    });
   }
 
   /**
    * Turn off app
    */
   private async turnOffApp(appName: string): Promise<void> {
+    let previousState: 'running' | 'stopped' = 'running';
+    let success = false;
+    let error: string | undefined;
+
     try {
       logger.info(`Scheduled task: Turning OFF app ${appName}`);
+      
+      // Get current state
+      const currentStatus = await this.herokuClient.getAppStatus(appName);
+      previousState = currentStatus.isRunning ? 'running' : 'stopped';
+      
       await this.herokuClient.turnOffApp(appName);
+      success = true;
       logger.info(`Scheduled task completed: App ${appName} turned OFF`);
-    } catch (error) {
-      logger.error(`Scheduled task failed: Could not turn OFF app ${appName}:`, error);
+    } catch (err: any) {
+      error = err.message || 'Unknown error';
+      logger.error(`Scheduled task failed: Could not turn OFF app ${appName}:`, err);
     }
+
+    // Record in history
+    await this.historyManager.addEntry({
+      appName,
+      action: 'turn_off',
+      success,
+      error,
+      previousState,
+      newState: success ? 'stopped' : previousState
+    });
   }
 
   /**

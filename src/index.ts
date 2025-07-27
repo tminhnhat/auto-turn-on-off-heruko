@@ -1,6 +1,8 @@
 import { Config } from './config/config';
 import { HerokuClient } from './services/herokuClient';
 import { Scheduler } from './services/scheduler';
+import { HerokuStatus } from './utils/status';
+import { HistoryManager } from './utils/history';
 import { logger } from './utils/logger';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -9,6 +11,8 @@ class HerokuAutoScheduler {
   private config: Config;
   private herokuClient: HerokuClient;
   private scheduler: Scheduler;
+  private statusManager: HerokuStatus;
+  private historyManager: HistoryManager;
 
   constructor() {
     try {
@@ -22,8 +26,14 @@ class HerokuAutoScheduler {
       // Initialize Heroku client
       this.herokuClient = new HerokuClient(this.config.herokuApiToken);
 
-      // Initialize scheduler
-      this.scheduler = new Scheduler(this.herokuClient, this.config.apps);
+      // Initialize status manager
+      this.statusManager = new HerokuStatus(this.herokuClient);
+
+      // Initialize history manager
+      this.historyManager = new HistoryManager();
+
+      // Initialize scheduler with history manager
+      this.scheduler = new Scheduler(this.herokuClient, this.config.apps, this.historyManager);
 
       logger.info('Heroku Auto Scheduler initialized successfully');
       logger.info('Configuration:', this.config.getSummary());
@@ -181,6 +191,40 @@ class HerokuAutoScheduler {
 
   async getStatus(appName: string): Promise<{ isRunning: boolean; dynos: any[] }> {
     return await this.herokuClient.getAppStatus(appName);
+  }
+
+  /**
+   * Generate comprehensive status report
+   */
+  async generateStatusReport(): Promise<string> {
+    const appNames = this.config.apps.map(app => app.name);
+    return await this.statusManager.generateStatusReport(appNames);
+  }
+
+  /**
+   * Generate history report
+   */
+  async generateHistoryReport(days: number = 7): Promise<string> {
+    return await this.historyManager.generateReport(days);
+  }
+
+  /**
+   * Perform health check on all apps
+   */
+  async performHealthCheck(): Promise<{
+    healthy: boolean;
+    issues: string[];
+    summary: { running: number; stopped: number; errors: number };
+  }> {
+    const appNames = this.config.apps.map(app => app.name);
+    return await this.statusManager.healthCheck(appNames);
+  }
+
+  /**
+   * Get scheduler statistics
+   */
+  async getSchedulerStats(): Promise<any> {
+    return await this.historyManager.getStatistics();
   }
 }
 

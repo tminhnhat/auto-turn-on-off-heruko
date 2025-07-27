@@ -1,24 +1,49 @@
 {
-  "name": "auto-heroku-scheduler",
-  "version": "1.0.0",
+  "name": "heroku-auto-scheduler",
+  "displayName": "Heroku Auto Scheduler",
   "description": "Automatically turn Heroku apps on/off using API with scheduling",
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "main": "dist/index.js",
+  "bin": {
+    "heroku-scheduler": "dist/index.js"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "watch": "nodemon --exec ts-node src/index.ts",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "test": "ts-node src/test.ts",
+    "demo": "ts-node demo.ts",
+    "cli": "ts-node src/cli.ts",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "setup": "npm install && npm run build"
   },
   "keywords": [
     "heroku",
     "scheduler",
     "api",
     "automation",
-    "typescript"
+    "typescript",
+    "cron",
+    "dyno",
+    "scaling"
   ],
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/auto-turn-on-off-heruko.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/auto-turn-on-off-heruko/issues"
+  },
+  "homepage": "https://github.com/yourusername/auto-turn-on-off-heruko#readme",
   "dependencies": {
     "axios": "^1.6.7",
     "node-cron": "^3.0.3",
@@ -28,9 +53,18 @@
   "devDependencies": {
     "@types/node": "^20.11.16",
     "@types/node-cron": "^3.0.11",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.56.0",
     "typescript": "^5.3.3",
     "ts-node": "^10.9.2",
     "nodemon": "^3.0.3",
     "rimraf": "^5.0.5"
-  }
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE",
+    "package.json"
+  ]
 }
