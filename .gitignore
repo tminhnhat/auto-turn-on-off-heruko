@@ -1,16 +1,30 @@
+# Dependencies
 node_modules/
+jspm_packages/
+
+# Build outputs
 dist/
+build/
+
+# Logs and runtime data
 logs/
 *.log
+pids
+*.pid
+*.seed
+*.pid.lock
 
-# Environment variables
+# Environment variables (NEVER commit these!)
 .env
+.env.local
+.env.*.local
 
-# IDE files
+# IDE and editor files
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
 # OS generated files
 .DS_Store
@@ -20,34 +34,57 @@ logs/
 .Trashes
 ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
+# Runtime data and temp files
+.tmp/
+.cache/
+.temp/
 
-# Coverage directory used by tools like istanbul
+# Coverage and testing
 coverage/
 *.lcov
-
-# nyc test coverage
 .nyc_output
+test-results/
+test-reports/
 
-# Dependency directories
-jspm_packages/
-
-# Optional npm cache directory
+# Package manager files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 .npm
+.yarn-integrity
+package-lock.json.backup
 
-# Optional eslint cache
+# TypeScript cache
+*.tsbuildinfo
+.tscache/
+
+# ESLint cache
 .eslintcache
 
-# Microbundle cache
+# Build tool caches
 .rpt2_cache/
 .rts2_cache_cjs/
 .rts2_cache_es/
 .rts2_cache_umd/
+.parcel-cache
+
+# Application specific
+# PM2 logs (if using PM2)
+pm2.log
+.pm2/
+
+# History files (large files should be excluded)
+# Uncomment if history files get too large
+# logs/schedule-history.json
+
+# Backup files
+*.backup
+*.bak
+
+# Optional: Exclude compiled CLI if distributed
+# bin/
 
 # Optional REPL history
 .node_repl_history
